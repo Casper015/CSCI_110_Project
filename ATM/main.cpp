@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 
+class AddAcount{
+    };
 std::array <std::string,3> pin = {"0000","0000","0000"};
 int balance = 0;
 
@@ -15,14 +17,19 @@ void change_pin(std::string, std::string);
 void self_test_1();
 void self_test_2();
 
-void clear_input_error(std::string name_function); // clear the cin error, output error
-bool check_PIN(std::string); // check pin 1. s.length == 4 2. is it all int ？
-int money_to_balance(double money); // double money > int balance
-std::string rand_PIN();
-std::string locale_en_us(int money); // int balance > string money(en_us fomart)
+class utils {
+    public:
+    static void clear_the_screen();
+    static void clear_input_error(std::string name_function); // clear the cin error, output error
+    static bool check_PIN(std::string); // check pin 1. s.length == 4 2. is it all int ？
+    static int money_to_balance(double money); // double money > int balance
+    static std::string rand_PIN();
+    static std::string locale_en_us(int money); // int balance > string money(en_us fomart)
+};
+
 
 int main() {
-    std::cout << "\n\nRe_SIMPLE ATM Version 1.0\n\n";
+    std::cout << "\n\nRe_SIMPLE ATM Version 1.1\n\n";
     while (true) {
         if (log_in()){
             menu();
@@ -38,7 +45,7 @@ bool log_in(){
         std::cin >> inputPin;
 
         if(std::cin.fail()){
-            clear_input_error("PIN");
+            utils::clear_input_error("PIN");
             continue;
         }
 
@@ -59,7 +66,7 @@ void menu() {
     bool login = true;
 
     while(login){
-
+        utils::clear_the_screen();
         std::cout << "\n**** SIMPLE ATM ****\n";
         std::cout << "1. Show balance\n";
         std::cout << "2. Withdraw\n";
@@ -73,7 +80,7 @@ void menu() {
             std::cin >> choice;
 
             if (std::cin.fail()) {
-                clear_input_error("choice");
+                utils::clear_input_error("choice");
                 continue;
             }
 
@@ -106,21 +113,22 @@ void menu() {
                 self_test_2();
                 break;
             }
+        system("pause");
     }
 }
 
 void show_balance(){ 
-    std::cout << std::endl << "Your balance is " << locale_en_us(balance) << std::endl;
+    std::cout << std::endl << "Your balance is " << utils::locale_en_us(balance) << std::endl;
 }
 
 void withdraw(double input){
 
     while(input <= 0){
-        std::cout <<"\nTotal balance: "<< locale_en_us(balance) << ". Withdraw amount: ";
+        std::cout <<"\nTotal balance: "<< utils::locale_en_us(balance) << ". Withdraw amount: ";
         std::cin >> input;
 
         if(std::cin.fail()){
-            clear_input_error("Withdraw amount");
+            utils::clear_input_error("Withdraw amount");
             continue;
 
         }else if(input <= 0){
@@ -128,15 +136,15 @@ void withdraw(double input){
         }
     }
 
-    int withdraw = money_to_balance(input);
+    int withdraw = utils::money_to_balance(input);
 
     if(withdraw > balance){
         std::cout << "Insufficient funds. Withdraw cancelled.\n";
     }
     else{
         balance -= withdraw;
-        std::cout << std::endl << locale_en_us(withdraw) << " withdrawn. Your balance is "
-        << locale_en_us(balance) << std::endl;
+        std::cout << std::endl << utils::locale_en_us(withdraw) << " withdrawn. Your balance is "
+        << utils::locale_en_us(balance) << std::endl;
     }
     
 }
@@ -148,7 +156,7 @@ void deposit_money(double input){
         std::cin >> input;
 
         if (std::cin.fail()){
-            clear_input_error("currency amount");
+            utils::clear_input_error("currency amount");
             continue;
         }else if(input <= 0){
             std::cout << "Invalid deposit amount. Try again.\n";
@@ -156,11 +164,11 @@ void deposit_money(double input){
         }
     }
     
-    int deposit = money_to_balance(input);
+    int deposit = utils::money_to_balance(input);
     balance += deposit;
 
-    std::cout << std::endl << locale_en_us(deposit) << " deposited. Your balance is "
-    << locale_en_us(balance) << std::endl;
+    std::cout << std::endl << utils::locale_en_us(deposit) << " deposited. Your balance is "
+    << utils::locale_en_us(balance) << std::endl;
 }
 
 void change_pin(std::string input, std::string new_PIN){
@@ -195,7 +203,7 @@ void change_pin(std::string input, std::string new_PIN){
         } else if (new_PIN.empty()){
             std::cout << "\nChange PIN cancelled.\n";
             return;
-        } else if(check_PIN(new_PIN)){
+        } else if(utils::check_PIN(new_PIN)){
             std::cout << "Invalid PIN format. Try again.\n";
             continue;
         } else{
@@ -250,7 +258,7 @@ void self_test_2(){
     
     for(int i = 1; i < 4; i++){
 
-        test_pin[i] = rand_PIN();
+        test_pin[i] = utils::rand_PIN();
         /*
         std::cout << "Enter current PIN (blank = cancel): " << test_pin[i-1] << std::endl
         << "Enter new PIN (exactly 4 digits): " << test_pin[i] << std::endl
@@ -269,26 +277,38 @@ void self_test_2(){
     change_pin(test_pin[3],test_pin[1]);
 
     pin = temp;
+    system("pause");
     
 }
 
-void clear_input_error(std::string name_function){ 
+
+// Clear screen using ANSI terminal codes
+// https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
+void utils::clear_the_screen(){
+    const std::string CSI = "\x1b[";	// ANSI terminal escape sequence
+
+	std::cout << CSI << "2J";
+	std::cout << CSI << "1;1H";
+
+}
+
+void utils::clear_input_error(std::string name_function){ 
     std::cin.clear();
     std::cin.ignore(10000, '\n');
     std::cout << "Invalid " << name_function << ". Try again.\n";
 }
 
-bool check_PIN(std::string s){ 
+bool utils::check_PIN(std::string s){ 
     return s.length() != 4 || 
            s.find_first_not_of("0123456789") != std::string::npos;
 }
 
-int money_to_balance(double money){ 
+int utils::money_to_balance(double money){ 
     int dollars = static_cast<int>(money * 100);
     return dollars;
 }
 
-std::string rand_PIN(){
+std::string utils::rand_PIN(){
     std::string radom_PIN;
     
     for(int i = 0; i < 4; i++){
@@ -299,7 +319,7 @@ std::string rand_PIN(){
 
 }
 
-std::string locale_en_us(int money){ 
+std::string utils::locale_en_us(int money){ 
     
     std::string result = "$";
     
