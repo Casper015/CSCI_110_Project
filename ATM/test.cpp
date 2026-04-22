@@ -12,12 +12,34 @@ bool isInteger(std::string s){
 
 }
 
-int main(){
-    std::string s = "12345";
-    if (isInteger(s)){
-        std::cout << "The string is an integer." << std::endl;
-    } else {
-        std::cout << "The string is not an integer." << std::endl;
+bool isReal(std::string s){
+    int startPos = (s.length() > 0 && s[0] == '-' ? 1 : 0);
+    int decCnt = 0;
+    for (int i = startPos; i < s.length(); i++){
+        char c = s[i];
+        if (c == '.'){
+            if (decCnt>0)
+                return false;
+            decCnt++;
+            continue;
+        }
+        if (c < '0' || c > '9'){
+        return false;
     }
-    return 0;
+    }
+}
+
+int main(){
+    while (true){
+        std::string s;
+        std::getline(std::cin, s);
+        if (isInteger(s)){
+            std::cout << "The string is an integer." << std::endl;
+        } else if (isReal(s)) {
+            std::cout << "The string is an real." << std::endl;
+        }else {
+            std::cout << "The string is not an integer or real." << std::endl;
+        }
+        return 0;
+        }
 }
