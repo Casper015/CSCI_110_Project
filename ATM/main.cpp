@@ -2,8 +2,6 @@
 #include <iostream>
 #include <string>
 
-class AddAcount{
-    };
 std::array <std::string,3> pin = {"0000","0000","0000"};
 int balance = 0;
 
@@ -17,14 +15,17 @@ void change_pin(std::string, std::string);
 void self_test_1();
 void self_test_2();
 
+int edit_balance();
+std::string edit_PIN();
+
 class utils {
     public:
-    static void clear_the_screen();
-    static void clear_input_error(std::string name_function); // clear the cin error, output error
-    static bool check_PIN(std::string); // check pin 1. s.length == 4 2. is it all int ？
-    static int money_to_balance(double money); // double money > int balance
-    static std::string rand_PIN();
-    static std::string locale_en_us(int money); // int balance > string money(en_us fomart)
+        static void clear_the_screen();
+        static void clear_input_error(std::string name_function); // clear the cin error, output error
+        static bool check_PIN(std::string); // check pin 1. s.length == 4 2. is it all int ？
+        static int money_to_balance(double money); // double money > int balance
+        static std::string rand_PIN();
+        static std::string locale_en_us(int money); // int balance > string money(en_us fomart)
 };
 
 
@@ -259,21 +260,11 @@ void self_test_2(){
     for(int i = 1; i < 4; i++){
 
         test_pin[i] = utils::rand_PIN();
-        /*
-        std::cout << "Enter current PIN (blank = cancel): " << test_pin[i-1] << std::endl
-        << "Enter new PIN (exactly 4 digits): " << test_pin[i] << std::endl
-        << "Confirm new PIN: " << test_pin[i] << std::endl;
-        */
         change_pin(test_pin[i-1],test_pin[i]);
         std::cout << std::endl;
 
     }
 
-    /*
-    std::cout << "Enter current PIN (blank = cancel): " << test_pin[3] << std::endl
-    << "Enter new PIN (exactly 4 digits): " << test_pin[1] << std::endl
-    << "Confirm new PIN: " << test_pin[1] << std::endl;
-    */
     change_pin(test_pin[3],test_pin[1]);
 
     pin = temp;
