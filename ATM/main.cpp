@@ -119,16 +119,16 @@ void menu() {
                 std::cout << "Self Test selected.\n" << "Test Precision: ";
 
                 if (self_test_1("0.03", "0.01")){
-                    std::cout << "Pass. \n";
+                    std::cout << "PASS. \n";
                 }else{
-                    std::cout << "Not Pass. \n";
+                    std::cout << "NOT PASS. \n";
                 }
 
                 std::cout << "Test PIN Change History: ";
                 if (self_test_2()){
-                    std::cout << "Pass. \n";
+                    std::cout << "PASS. \n";
                 }else{
-                    std::cout << "Not Pass. \n";
+                    std::cout << "NOT PASS. \n";
                 }                
                 break;
             }
@@ -243,7 +243,7 @@ void change_pin(){
 
         if (utils::check_PIN(new_PIN)){
             std::cout << "Can't re-use the last 3 PINs.\n";
-            continue;
+            return;
         }
 
         break;
@@ -255,8 +255,8 @@ void change_pin(){
 
 }
 
+// true means this test confirms balance math is correct
 bool self_test_1(const std::string& deposit, const std::string& with_draw){
-    // true means this test confirms balance math is correct
     int deposit_test, with_draw_test, temp = balance;
     // Set balance to 0.00 dollars
     balance = 0;
@@ -287,40 +287,57 @@ bool self_test_1(const std::string& deposit, const std::string& with_draw){
     return false;  
 }
 
+// true means this test confirms the last-3-PIN reuse rule works
 bool self_test_2(){
-    // true means this test confirms the last-3-PIN reuse rule works
+    
     
     // Clear PIN history
     srand(time(0));
-    std::array <std::string,3> test_pin, temp = pin;
+    std::array <std::string,3> temp = pin;
+    std::array <std::string,4> test_pin;
     pin = {"0000","0000","0000"};
 
     // Change PIN 3 times and use a different valid PIN each time
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 4; i++){
         test_pin[i] = utils::rand_PIN();
+        
         // Regenerate until the PIN is valid and different from previous test PINs
         while (utils::is_PIN(test_pin[i]) ||
                (i > 0 && test_pin[i] == test_pin[0]) ||
-               (i > 1 && test_pin[i] == test_pin[1])) {
+               (i > 1 && test_pin[i] == test_pin[1]) ||
+               (i > 2 && test_pin[i] == test_pin[2])) {
             test_pin[i] = utils::rand_PIN();
+        }
+        
+        //Check is anybody reuse it before?
+        if (utils::check_PIN(test_pin[i])){
+            pin = temp;
+            return false;
         }
         edit_PIN(test_pin[i]);
     }
 
     // Reusing the oldest test PIN should be detected
+    // 1. check the first is not one of the least 3
+    // 2. check the second is on  of the least 3
     if (utils::check_PIN(test_pin[0])){
         pin = temp;
+        return false;
+    } else if (utils::check_PIN(test_pin[1])){
+        pin = temp;
         return true;
+    } else{
+        pin = temp;
+        return false;
     }
-    
-    pin = temp;
-    return false;
+        
     
 }
 
+// with_draw true means subtract from balance and false means add to balance
 void edit_balance(const int& input, const bool& with_draw){
     
-    // with_draw true means subtract from balance and false means add to balance
+    
     if (with_draw){
         balance -= input;
     }else {
@@ -329,6 +346,7 @@ void edit_balance(const int& input, const bool& with_draw){
 
 }
 
+// Move all the pin foward a digit
 void edit_PIN(const std::string& new_PIN){
     pin[2] = pin[1];
     pin[1] = pin[0]; 
