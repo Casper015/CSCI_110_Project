@@ -16,8 +16,8 @@ void change_pin();
 bool self_test_1();
 bool self_test_2();
 
-int edit_balance(const std::string& input, const bool& with_draw);
-std::string edit_PIN(std::string input);
+void edit_balance(const int& input, const bool& with_draw);
+std::string edit_PIN(const std::string& input);
 
 class utils {
     public:
@@ -126,9 +126,11 @@ void show_balance(){
 }
 
 void withdraw(){
+    std::string raw;
 
+    //Check cin raw and cout
     while(true){
-        std::string raw;
+
         std::cout <<"\nTotal balance: "<< utils::locale_en_us(balance) 
         << ". Withdraw amount (blank = cancel) : ";
         std::getline(std::cin,raw);
@@ -136,46 +138,56 @@ void withdraw(){
         if(std::cin.fail()){
             utils::clear_input_error("Withdraw amount");
             continue;
-
-        }else if(input <= 0){
+        }else if(raw.empty()){
+            return;
+        }else if (!utils::is_money(raw)){
             std::cout << "Invalid withdraw amount. Try again.\n";
+            continue;
         }
+        
+        break;
     }
 
-    int withdraw = utils::money_to_balance(input);
-
-    if(withdraw > balance){
-        std::cout << "Insufficient funds. Withdraw cancelled.\n";
-    }
-    else{
-        balance -= withdraw;
+    //edit the balance, true means with_draw
+    int withdraw = utils::is_PIN(raw);
+    
+    // check withdraw < balance ?
+    if(utils::check_balance(withdraw)){
+        edit_balance(withdraw, true);
         std::cout << std::endl << utils::locale_en_us(withdraw) << " withdrawn. Your balance is "
         << utils::locale_en_us(balance) << std::endl;
+    }else{
+        std::cout << "Insufficient funds. Withdraw cancelled.\n";
     }
-    
+
+    return;
 }
 
 void deposit_money(){
-    
+    std::string raw;
+
+    // Input and check raw
     while(true){
-        std::cout << "Deposit amount: ";
-        
-        std::string raw;
+        std::cout << "Deposit amount (blank = cancel) : ";
         std::getline(std::cin,raw);
 
         if (std::cin.fail()){
             utils::clear_input_error("currency amount");
             continue;
         }else if(raw.empty()){
-            std::cout << "Invalid deposit amount. Try again.\n";
             return;
-        }else if()
-        
+        }else if(!utils::is_money(raw)){
+            std::cout << "Invalid Input. Please try again\n";
+            continue;
+        }
         break;
     }
     
-    int deposit = utils::money_to_balance(input);
-    balance += deposit;
+    //deposit money
+    //1. string to int
+    //2. deposit in to the 
+    int deposit = utils::money_string_to_int(raw);
+    edit_balance(deposit, false);
 
     std::cout << std::endl << utils::locale_en_us(deposit) << " deposited. Your balance is "
     << utils::locale_en_us(balance) << std::endl;
@@ -236,16 +248,6 @@ void change_pin(std::string input, std::string new_PIN){
 
         break;
 
-    } while(new_PIN.empty()||re_PIN.empty());
-
-    if(new_PIN == pin[0] || new_PIN == pin[1]|| new_PIN == pin[2]){
-        std::cout << "Can't re-use the last 3 PINs.\n";
-        return;
-    }
-
-    pin[2] = pin[1];
-    pin[1] = pin[0]; 
-    pin[0] = new_PIN; 
 
     std::cout << "Your PIN has been changed.\n"; 
 
@@ -281,15 +283,19 @@ bool self_test_2(){
     
 }
 
-int edit_balance(const std::string& input, const bool& with_draw){
+void edit_balance(const int& input, const bool& with_draw){
     
     // if is withdraw  - balance
     // if it deposit   + balance  
     if (with_draw){
-        balance -= utils::money_string_to_int(input);
+        balance -= input;
     }else {
-        balance += utils::money_string_to_int(input);
+        balance += input;
     }
+
+}
+
+std::string edit_PIN(const std::string& input){
 
 }
 
