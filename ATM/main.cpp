@@ -5,19 +5,18 @@
 std::array <std::string,3> pin = {"0000","0000","0000"};
 int balance = 0;
 
-bool log_in(); // true means the user entered the correct current PIN
-
 void menu();
 void show_balance();
 void withdraw();
 void deposit_money();
 void change_pin();
 
+bool log_in(); // true means the user entered the correct current PIN
 bool self_test_1(const std::string& deposit, const std::string& with_draw); // true means the deposit/withdraw precision test passed
 bool self_test_2(); // true means the PIN history test passed
 
 void edit_balance(const int& input, const bool& with_draw); // with_draw true means withdraw and false means deposit
-void edit_PIN(const std::string& new_PIN);
+void edit_PIN(const std::string& new_PIN); 
 
 class utils {
     public:
@@ -34,7 +33,6 @@ class utils {
 
 
 int main() {
-    std::cout << "\n\nRe_SIMPLE ATM Version 1.1\n\n";
     while (true) {
         if (log_in()){
             menu();
@@ -45,6 +43,7 @@ int main() {
 // true means login succeeded with the current PIN
 bool log_in(){
     std::string inputPin;
+    std::cout << "\n\nRe_SIMPLE ATM Version 1.2\n\n";    
     
     do{
         std::cout <<"Enter PIN: ";
@@ -73,7 +72,8 @@ void menu() {
 
     while(login){
         utils::clear_the_screen();
-        std::cout << "\n**** SIMPLE ATM ****\n";
+        std::cout << "**** SIMPLE ATM ****";
+        std::cout << "Balance: " << utils::locale_en_us(balance) << std::endl << std::endl << std::endl;
         std::cout << "1. Show balance\n";
         std::cout << "2. Withdraw\n";
         std::cout << "3. Deposit\n";
@@ -112,6 +112,7 @@ void menu() {
             case 5:
                 std::cout << "\nYou are logged out.\n";
                 login = false;
+                utils::clear_the_screen();
                 break;
             case 6:
                 
@@ -248,8 +249,8 @@ void change_pin(){
         break;
     }
 
+    edit_PIN(new_PIN);
     std::cout << "Your PIN has been changed.\n"; 
-
     return;
 
 }
@@ -448,7 +449,7 @@ std::string utils::rand_PIN(){
 
 // MinGW (GCC on Windows) has limited locale formatting support
 // so this manually formats US currency text
-// Output example: $123.31
+// Output example: $1,2123.31
 std::string utils::locale_en_us(const int& money){ 
     
     // Start with currency symbol
