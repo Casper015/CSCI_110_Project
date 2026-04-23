@@ -17,7 +17,7 @@ bool self_test_1();
 bool self_test_2();
 
 void edit_balance(const int& input, const bool& with_draw);
-std::string edit_PIN(const std::string& input);
+std::string edit_PIN(const std::string& new_PIN);
 
 class utils {
     public:
@@ -26,6 +26,7 @@ class utils {
         static bool is_PIN(const std::string& s); // check pin 1. s.length == 4 2. is it all int ？
         static bool utils::is_money(std::string s); 
         static bool utils::check_balance(const int& with_draw);
+        static bool utils::check_PIN(const std::string& new_PIN);
         static int utils::money_string_to_int(std::string s);
         static std::string rand_PIN();
         static std::string locale_en_us(const int& money); // int balance > string money(en_us fomart)
@@ -193,63 +194,54 @@ void deposit_money(){
     << utils::locale_en_us(balance) << std::endl;
 }
 
-void change_pin(std::string input, std::string new_PIN){
+void change_pin(){
 
-    do {
+    std::string input, re_PIN, new_PIN; 
+    while (true) {
 
         std::cout << "Enter current PIN (blank = cancel): ";
-        if(input != pin[0]){
-            std::cin.ignore(10000, '\n'); // Clear the input
-            std::getline(std::cin, input);
-        } else if (input.empty()){
-            std::cout << "\nChange PIN cancelled.\n";
+        std::getline(std::cin, input);
+
+        if (input.empty()){
+            std::cout << "\n Change PIN cancelled.\n";
             return;
         } else if(input != pin[0]){
             std::cout << "Invalid PIN. Please try again.\n";
             continue;
-        }else{
-            std::cout << input  << std::endl;
         }
+        
         break;
+    };
+    
+    while(true) {
 
-    } while (true);
-    
-    std::string re_PIN = new_PIN;
-    
-    do {
         std::cout << "Enter new PIN (exactly 4 digits): ";
-        if (new_PIN.empty()) {
-            std::getline(std::cin, new_PIN);
-            std::cout << "\nChange PIN cancelled.\n";
-            return;
-        } else if (new_PIN.empty()){
-            std::cout << "\nChange PIN cancelled.\n";
-            return;
-        } else if(utils::is_PIN(new_PIN)){
+        std::getline(std::cin, new_PIN);
+        
+        if(!utils::is_PIN(new_PIN)){
             std::cout << "Invalid PIN format. Try again.\n";
             continue;
-        } else{
-            std::cout << new_PIN  << std::endl;
-        }
+        } 
 
         std::cout << "Confirm new PIN: ";
-        if (re_PIN.empty()) {
-            std::getline(std::cin, re_PIN);
-        } else if (re_PIN.empty()) {
-            std::cout << "\nChange PIN cancelled.\n";
-            return;
-        } else if (re_PIN != new_PIN){
+        std::getline(std::cin, re_PIN);
+        
+        if (re_PIN != new_PIN){
             std::cout << "New PINs do not match.\n";
             continue;
-        }else{
-            std::cout << re_PIN  << std::endl;
-            
+        }
+
+        if (utils::check_PIN(new_PIN)){
+            std::cout << "Can't re-use the last 3 PINs.\n";
+            continue;
         }
 
         break;
-
+    }
 
     std::cout << "Your PIN has been changed.\n"; 
+
+    return;
 
 }
 
@@ -295,8 +287,11 @@ void edit_balance(const int& input, const bool& with_draw){
 
 }
 
-std::string edit_PIN(const std::string& input){
-
+std::string edit_PIN(const std::string& new_PIN){
+    pin[2] = pin[1];
+    pin[1] = pin[0]; 
+    pin[0] = new_PIN;
+    return;
 }
 
 // Direct copy form the Slot machine cpp
@@ -320,8 +315,8 @@ void utils::clear_input_error(const std::string& name_function){
 //check the PIN is ready to go or not
 // s.find_first_not_of("0123456789") != std::string::npos is same us for loop find 1 to 9
 bool utils::is_PIN(const std::string& s){ 
-    return s.length() != 4 || 
-           s.find_first_not_of("0123456789") != std::string::npos;
+    return s.length() == 4 || 
+           s.find_first_not_of("0123456789") == std::string::npos;
 }
 
 //check user is legal input? Accept input look like (0.xx/0.x/.xx/0./123) 
@@ -357,6 +352,10 @@ bool utils::is_money(std::string s){
 // if the balance is larger the  with_draw
 bool utils::check_balance(const int& with_draw){
     return (with_draw <= balance);
+}
+
+bool utils::check_PIN(const std::string& new_PIN){      
+    return (new_PIN == pin[0] || new_PIN == pin[1]|| new_PIN == pin[2]);
 }
 
 //convert the string money to int balance
