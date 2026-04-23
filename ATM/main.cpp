@@ -9,23 +9,26 @@ bool log_in();
 
 void menu();
 void show_balance();
-void withdraw(double input);
-void deposit_money(double input);
-void change_pin(std::string, std::string);
-void self_test_1();
-void self_test_2();
+void withdraw();
+void deposit_money();
+void change_pin();
 
-int edit_balance();
-std::string edit_PIN();
+bool self_test_1();
+bool self_test_2();
+
+int edit_balance(const std::string& input, const bool& with_draw);
+std::string edit_PIN(std::string input);
 
 class utils {
     public:
         static void clear_the_screen();
-        static void clear_input_error(std::string name_function); // clear the cin error, output error
-        static bool check_PIN(std::string); // check pin 1. s.length == 4 2. is it all int ？
-        static int money_to_balance(double money); // double money > int balance
+        static void clear_input_error(const std::string& name_function);
+        static bool is_PIN(const std::string& s); // check pin 1. s.length == 4 2. is it all int ？
+        static bool utils::is_money(std::string s); 
+        static bool utils::check_balance(const int& with_draw);
+        static int utils::money_string_to_int(std::string s);
         static std::string rand_PIN();
-        static std::string locale_en_us(int money); // int balance > string money(en_us fomart)
+        static std::string locale_en_us(const int& money); // int balance > string money(en_us fomart)
 };
 
 
@@ -96,13 +99,13 @@ void menu() {
                 show_balance();
                 break;
             case 2:
-                withdraw(0);
+                withdraw();
                 break;
             case 3:
-                deposit_money(0);
+                deposit_money();
                 break;
             case 4:
-                change_pin("", "");
+                change_pin();
                 break;
             case 5:
                 std::cout << "\nYou are logged out.\n";
@@ -122,11 +125,13 @@ void show_balance(){
     std::cout << std::endl << "Your balance is " << utils::locale_en_us(balance) << std::endl;
 }
 
-void withdraw(double input){
+void withdraw(){
 
-    while(input <= 0){
-        std::cout <<"\nTotal balance: "<< utils::locale_en_us(balance) << ". Withdraw amount: ";
-        std::cin >> input;
+    while(true){
+        std::string raw;
+        std::cout <<"\nTotal balance: "<< utils::locale_en_us(balance) 
+        << ". Withdraw amount (blank = cancel) : ";
+        std::getline(std::cin,raw);
 
         if(std::cin.fail()){
             utils::clear_input_error("Withdraw amount");
@@ -150,19 +155,23 @@ void withdraw(double input){
     
 }
 
-void deposit_money(double input){
+void deposit_money(){
     
-    while(input <= 0){
+    while(true){
         std::cout << "Deposit amount: ";
-        std::cin >> input;
+        
+        std::string raw;
+        std::getline(std::cin,raw);
 
         if (std::cin.fail()){
             utils::clear_input_error("currency amount");
             continue;
-        }else if(input <= 0){
+        }else if(raw.empty()){
             std::cout << "Invalid deposit amount. Try again.\n";
-            continue;
-        }
+            return;
+        }else if()
+        
+        break;
     }
     
     int deposit = utils::money_to_balance(input);
@@ -204,7 +213,7 @@ void change_pin(std::string input, std::string new_PIN){
         } else if (new_PIN.empty()){
             std::cout << "\nChange PIN cancelled.\n";
             return;
-        } else if(utils::check_PIN(new_PIN)){
+        } else if(utils::is_PIN(new_PIN)){
             std::cout << "Invalid PIN format. Try again.\n";
             continue;
         } else{
@@ -242,7 +251,7 @@ void change_pin(std::string input, std::string new_PIN){
 
 }
 
-void self_test_1(){
+bool self_test_1(){
     int temp = balance;
     balance = 0;
     deposit_money(0.03);
@@ -251,7 +260,7 @@ void self_test_1(){
     balance = temp;
 }
 
-void self_test_2(){
+bool self_test_2(){
     srand(time(0));
     std::array <std::string,3> temp = pin;
     std::array <std::string,4> test_pin = {"0000","0000","0000","0000"};
@@ -272,7 +281,19 @@ void self_test_2(){
     
 }
 
+int edit_balance(const std::string& input, const bool& with_draw){
+    
+    // if is withdraw  - balance
+    // if it deposit   + balance  
+    if (with_draw){
+        balance -= utils::money_string_to_int(input);
+    }else {
+        balance += utils::money_string_to_int(input);
+    }
 
+}
+
+// Direct copy form the Slot machine cpp
 // Clear screen using ANSI terminal codes
 // https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 void utils::clear_the_screen(){
@@ -283,22 +304,87 @@ void utils::clear_the_screen(){
 
 }
 
-void utils::clear_input_error(std::string name_function){ 
+// Clear the error of cin, make it possbile for next use
+void utils::clear_input_error(const std::string& name_function){ 
     std::cin.clear();
     std::cin.ignore(10000, '\n');
     std::cout << "Invalid " << name_function << ". Try again.\n";
 }
 
-bool utils::check_PIN(std::string s){ 
+//check the PIN is ready to go or not
+// s.find_first_not_of("0123456789") != std::string::npos is same us for loop find 1 to 9
+bool utils::is_PIN(const std::string& s){ 
     return s.length() != 4 || 
            s.find_first_not_of("0123456789") != std::string::npos;
 }
 
-int utils::money_to_balance(double money){ 
-    int dollars = static_cast<int>(money * 100);
-    return dollars;
+//check user is legal input? Accept input look like (0.xx/0.x/.xx/0./123) 
+bool utils::is_money(std::string s){
+    int dot_count = 0, after_dot = 0;
+    char c;
+
+    // suppot someone type .45 or .3
+    if (s[0] == '.') s = "0" + s;
+
+    for(int i = 0; i < static_cast<int>(s.size()); i++){
+        c = s[i];
+
+        if (c == '.'){
+            //only allow one '.'
+            if (dot_count > 0) return false;
+            
+            dot_count ++;
+            continue;
+        }
+
+        if (c < '0' || c > '9') return false;
+
+        if (dot_count == 1) after_dot ++;
+    }
+
+    // only accpet fomat like 0.XX or 0.X
+    if (after_dot > 2) return false;
+
+    return true;
 }
 
+// if the balance is larger the  with_draw
+bool utils::check_balance(const int& with_draw){
+    return (with_draw <= balance);
+}
+
+//convert the string money to int balance
+int utils::money_string_to_int(std::string s){
+    std::string dollars = 0, cents = 0;
+    int dotpos = -1;
+    if (s[0] == '.') s = "0" + s;
+
+    for (int i = 0; i < static_cast<int>(s.size()); i++){
+        if (s[i] == '.'){
+            dotpos = i;
+            break;
+        }
+    }
+
+    // not dot 
+    if(dotpos == -1) {
+        dollars = std::stoi(s);
+        return std::stoi(s) * 100;
+    }
+
+    // dollars part
+    dollars = s.substr(0, dotpos);
+
+    //cent part, make sure have two 00
+    cents = s.substr(dotpos, dotpos+1);
+    if (cents.size() == 0) cents = "00";
+    else if (cents.size() == 1) cents += "0";
+
+    return std::stoi(dollars + cents);
+
+}
+
+//4 digtals random PIN
 std::string utils::rand_PIN(){
     std::string radom_PIN;
     
@@ -310,13 +396,18 @@ std::string utils::rand_PIN(){
 
 }
 
-std::string utils::locale_en_us(int money){ 
+//Mingw(GCC in win) don't support, rewrite the en_us
+//Output: $123.31
+std::string utils::locale_en_us(const int& money){ 
     
+    // start at $
     std::string result = "$";
     
+    //Seperate the dolloras and cents
     int dollor = money/100;
     result += std::to_string(dollor);
 
+    //Add , for after each 3 digtals
     for(int i = static_cast<int>(result.size()) - 3 ;
     i > 1; i -=3 ){
         result.insert(i, ",");
@@ -324,6 +415,7 @@ std::string utils::locale_en_us(int money){
 
     result += ".";
     
+    // cents part
     int cents =  money%100;
     if (cents < 10){
         result += "0";
