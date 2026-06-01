@@ -3,6 +3,7 @@
 *
 * 11/18/25 Chun Wong - Initial version
 * 5/17/26 Chun Wong - Updated cloud server IP address
+* 6/01/26 Casper Xu - Updated for Project #2
 */
 #include <iostream>
 #include <fstream>
@@ -15,7 +16,7 @@
 
 using namespace std;
 
-const string AppVersion = "1.35";					// This app version
+const string AppVersion = "1.6";					// This app version
 const string MailServer = "http://34.57.53.121:80";	// Cloud server
 const int ServerTimeout = 5;						// Cloud server timeout
 const string MailExt = ".mail";						// File extension of off-line mail
@@ -64,6 +65,14 @@ bool mailApi(string, httplib::Params&, string&);
 #pragma endregion
 
 string highlightText(string& text, string& pattern);
+
+void bubblesort (vector<Mail>& arr, int& cost);
+void insertionsort(vector<Mail>& arr, int& cost);
+void quicksort(vector<Mail>& arr, int low, int high, int& cost);
+int partition(vector<Mail>& arr, int low, int high, int& cost);
+bool verifysorted(vector<Mail>& arr1, vector<Mail>& arr2, vector<Mail>& arr3);
+
+int binarySearch(vector<Mail>& arr, int size, string target, int& cost);
 
 
 // main
@@ -147,6 +156,29 @@ void listMail()
 		cout << "You have no mail." << endl;
 		return;
 	}
+
+	// Sort mail by date, most recent first
+	int bubleCost = 0, insertCost = 0, quickCost = 0;
+
+	vector<Mail> mailbuble = allMail;
+	vector<Mail> mailinsert = allMail;
+	vector<Mail> mailquick = allMail;
+
+	bubblesort(mailbuble, bubleCost);
+	insertionsort(mailinsert, insertCost);
+	quicksort(mailquick, 0, mailquick.size() - 1, quickCost);
+
+	cout << "Sorting costs: Bubble Sort = " << bubleCost 
+		<< ", Insertion Sort = " << insertCost 
+		<< ", Quick Sort = " << quickCost << endl;
+	
+
+	if (!verifysorted(mailbuble, mailinsert, mailquick)){
+		cout << "Sorting algorithms produced different results!" << endl << endl;
+		return;
+	}
+
+	allMail = mailquick;	// use quick sorted mail for display
 
 	int cnt = 1;
 	cout << left << setw(3) << "#" << setw(10) << "From" << setw(30) << "Subject" << setw(20) << "Date" << endl;
@@ -287,9 +319,10 @@ bool downloadMail()
 	if (!mailApi("recv", params, rawMailText))
 		return false;
 
-	cout << "BEGIN: RAW MAIL TEXT" << endl;
-	cout << rawMailText << endl;
-	cout << "END: RAW MAIL TEXT" << endl;
+	// Testting: print raw mail text from server
+	// cout << "BEGIN: RAW MAIL TEXT" << endl;
+	// cout << rawMailText << endl;
+	// cout << "END: RAW MAIL TEXT" << endl;
 
 	int count = 0;
 	stringstream sin(rawMailText);
@@ -314,7 +347,6 @@ bool downloadMail()
 		getline(ssMail, m.Subject);
 		if (!sdate.empty())
 			m.Date = static_cast<time_t>(stoll(sdate));
-
 
 		m.Body = "";
 		string bodyline;
@@ -589,5 +621,120 @@ string highlightText(string& text, string& pattern)
 
 	output += text.substr(pos);
 	return output;
+}
+
+// from class bubblesort
+void bubblesort (vector<Mail>& arr, int& cost){
+	int size = arr.size();
+	for (int maxElement = size - 1; maxElement > 0; maxElement--){
+		for (int index = 0; index < maxElement; index++){
+			cost++;
+			if (arr[index].Date > arr[index + 1].Date){
+				swap(arr[index], arr[index + 1]);
+			}
+		}
+	}
+}
+
+// for class insertionsort
+void insertionsort(vector<Mail>& arr, int& cost){
+	int size = arr.size();
+	for (int i = 1; i < size; i++){
+		Mail key = arr[i];
+		int j = i - 1;
+		while (j >= 0 && arr[j].Date > key.Date){
+			cost++;
+			if (arr[j].Date > key.Date){
+				arr[j + 1] = arr[j];
+				j--;
+			}
+			 else {
+				break;
+			}
+		}
+		arr[j + 1] = key;
+	}
+}
+
+
+// https://www.geeksforgeeks.org/cpp/cpp-program-for-quicksort/
+// C++ Program for Quick Sort
+void quicksort(vector<Mail>& arr, int low, int high, int& cost){
+	if (low < high){
+		int pi = partition(arr, low, high, cost);
+		quicksort(arr, low, pi - 1, cost);
+		quicksort(arr, pi + 1, high, cost);
+	}
+}
+
+int partition(vector<Mail>& arr, int low, int high, int& cost){
+	time_t pivot = arr[high].Date;
+	int i = low - 1;
+	for (int j = low; j < high; j++){
+		cost++;
+		if (arr[j].Date < pivot){
+			i++;
+			swap(arr[i], arr[j]);
+		}
+	}
+	swap(arr[i + 1], arr[high]);
+	return i + 1;
+}
+
+int binarySearch(vector<Mail>& arr, int size, time_t value, int& cost)
+{
+    int first;       // First array element
+    int last;        // Last array element
+    int middle;      // Midpoint of search
+    int position;    // Position of search value
+    bool found;      // Flag
+    cost = 0;
+
+    // Set the inital values.
+    first = 0;
+    last = size - 1;
+    position = -1;
+    found = false;
+
+    // Search for the value.
+    while (!found && first <= last)
+    {
+        cost++;
+        // Calculate midpoint
+        middle = (first + last) / 2;
+
+        // If value is found at midpoint...
+        if (arr[middle].Date == value)
+        {
+            found = true;
+            position = middle;
+        }
+
+        // else if value is in lower half...
+        else if (arr[middle].Date > value)
+            last = middle - 1;
+
+        // else if value is in upper half....
+        else
+            first = middle + 1;
+    }
+
+    // Return the position of the item, or -1
+    // if it was not found.
+    return position;
+}
+
+bool verifysorted(vector<Mail>& arr1, vector<Mail>& arr2, vector<Mail>& arr3){
+	if (arr1.size() != arr2.size() || arr1.size() != arr3.size()){
+		return false;
+	}
+
+	for (size_t i = 0; i < arr1.size(); i++){
+		if (arr1[i].Date != arr2[i].Date || arr1[i].Date != arr3[i].Date){
+			return false;
+		}
+	}
+
+	return true;
 }
 
