@@ -4,17 +4,11 @@
     {
       "label": "C/C++ Compile Run: Compile",
       "type": "shell",
-      "command": "g++",
+      "command": "powershell",
       "args": [
-        "-Wall",
-        "-Wextra",
-        "-g3",
-        "-std=c++17",
-        "-D_WIN32_WINNT=0x0A00",
-        "${workspaceFolder}\\Mailv1.cpp",
-        "-o",
-        "${workspaceFolder}\\output\\Mailv1.exe",
-        "-lws2_32"
+        "-NoProfile",
+        "-Command",
+        "New-Item -ItemType Directory -Force -Path '${workspaceFolder}\\output' | Out-Null; g++ -Wall -Wextra -g3 -std=c++17 -D_WIN32_WINNT=0x0A00 '${workspaceFolder}\\Mailv1.cpp' -o '${workspaceFolder}\\output\\Mailv1.exe' -lws2_32"
       ],
       "problemMatcher": ["$gcc"],
       "group": {

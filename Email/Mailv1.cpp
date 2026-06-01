@@ -53,15 +53,21 @@ bool deleteMail(const string);
 bool readMail(const ifstream&, Mail&);
 bool readMail(stringstream&, Mail&);
 void findMail();
-string createMailId();
+string createMailId(); 
 string absoluteDate(time_t);
 string relativeDate(time_t);
 string tolower(const string&);
-int casefind(const string&, const string&, size_t = 0);
+int casefind(const string&, const string&, size_t = 0);  ///casefind - Finds the first occurrence of a pattern within a larger text, returning the character position of the match.
 int max(const int, const int);
 string trim(string);
 bool mailApi(string, httplib::Params&, string&);
 #pragma endregion
+
+#pragma dev
+string highlightText(string& text, string& pattern);
+void convertMail();
+#pragma endregion
+
 
 // main
 int main()
@@ -256,8 +262,14 @@ void findMail()
 			cout << "Message #" << (i + 1) << endl;
 			cout << "From: " << mail.From << endl;
 			cout << "To: " << mail.To << endl;
-			cout << "Subject: " << mail.Subject << endl;
-			cout << mail.Body << endl;
+			
+
+			// cout << mail.Body << endl
+			// cout << "Subject: " << mail.Subject << endl;
+
+			cout << "Subject: "  << (inSubj >= 0 ? " (matched in subject)" : "") << endl;
+			cout << (inBody >= 0 ? " (matched in body)" : "") << endl;
+
 			cout << string(60, '-') << endl;
 			count++;
 		}
@@ -302,7 +314,7 @@ bool downloadMail()
 
 	cout << "Downloaded " << count << " messages." << endl;
 	purgeMail();	// Purge mail from server after successful download
-#endif
+
 	return true;
 }
 
@@ -533,4 +545,24 @@ bool mailApi(string route, httplib::Params& params, string& retVal)
 	}
 	retVal = res->body.data();
 	return true;
+}
+
+string highlightText(string& text, string& pattern)
+{
+	if (pattern.empty()) return text;
+	string output;
+
+	int pos = 0, matchPos = 0, patternLen = static_cast<int>(pattern.length());
+
+	// Loop through the internal function casefind.
+	while(casefind(text, pattern, pos) != -1)
+	{
+
+		output += text.substr(pos, matchPos - pos);
+		output += HIGHLIGHT + text.substr(matchPos, patternLen) + RESET;
+		pos = matchPos + patternLen;
+	}
+
+	output += text.substr(pos);
+	return output;
 }
