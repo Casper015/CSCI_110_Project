@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const string AppVersion = "1.3";					// This app version
+const string AppVersion = "1.35";					// This app version
 const string MailServer = "http://34.57.53.121:80";	// Cloud server
 const int ServerTimeout = 5;						// Cloud server timeout
 const string MailExt = ".mail";						// File extension of off-line mail
@@ -303,6 +303,7 @@ bool downloadMail()
 			continue;	// skip empty lines and header separator
 		
 		Mail m;
+		m.Date = 0;
 		stringstream ssMail(line);
 		string sdate;
 
@@ -311,6 +312,8 @@ bool downloadMail()
 		getline(ssMail, m.To, '|');
 		getline(ssMail, sdate, '|');
 		getline(ssMail, m.Subject);
+		if (!sdate.empty())
+			m.Date = static_cast<time_t>(stoll(sdate));
 
 
 		m.Body = "";
@@ -318,6 +321,8 @@ bool downloadMail()
 		while (getline(sin, bodyline)){
 			if (trim(bodyline) == "###")	// end of body
 				break;
+		
+			m.Body += bodyline + "\n";
 		}
 
 		if (tolower(m.To) == tolower(Username))
@@ -574,7 +579,7 @@ string highlightText(string& text, string& pattern)
 	int pos = 0, matchPos = 0, patternLen = static_cast<int>(pattern.length());
 
 	// Loop through the internal function casefind.
-	while(casefind(text, pattern, pos) != -1)
+	while((matchPos = casefind(text, pattern, pos)) != -1)
 	{
 
 		output += text.substr(pos, matchPos - pos);
@@ -585,3 +590,4 @@ string highlightText(string& text, string& pattern)
 	output += text.substr(pos);
 	return output;
 }
+
