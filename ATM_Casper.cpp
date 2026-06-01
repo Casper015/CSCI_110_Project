@@ -4,6 +4,8 @@
  */
 
 #include <array>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <string>
 
@@ -20,7 +22,7 @@ bool log_in(); // true means the user entered the correct current PIN
 bool self_test_1(const std::string& deposit, const std::string& with_draw); // true means the deposit/withdraw precision test passed
 bool self_test_2(); // true means the PIN history test passed
 
-void edit_balance(const int& input, const bool& with_draw); // with_draw true means withdraw and false means deposit
+void edit_balance(const std::string& input, const bool& with_draw); // with_draw true means withdraw and false means deposit
 void edit_PIN(const std::string& new_PIN); 
 
 class utils {
@@ -29,10 +31,10 @@ class utils {
         static void clear_input_error(const std::string& name_function);
         static bool is_PIN(const std::string& s); // true means the input is NOT a valid 4-digit PIN
         static bool is_money(std::string s); // true means the input is a valid money string
-        static bool check_balance(const int& with_draw); // true means the balance is enough for this withdrawal
+        static bool check_balance(const std::string& raw); // true means the balance is enough for this withdrawal
         static bool check_PIN(const std::string& new_PIN); // true means the PIN is reused from the last 3 PINs
         static int money_string_to_int(std::string s);
-        static std::string rand_PIN();
+        static std::array<std::string, 4> rand_PIN();
         static std::string locale_en_us(const int& money); // converts cents to US currency format
 };
 
@@ -169,8 +171,8 @@ void withdraw(){
     int withdraw = utils::money_string_to_int(raw);
     
     // Check whether the withdrawal amount is within the current balance
-    if(utils::check_balance(withdraw)){
-        edit_balance(withdraw, true);
+    if(utils::check_balance(raw)){
+        edit_balance(raw, true);
         std::cout << std::endl << utils::locale_en_us(withdraw) << " withdrawn. Your balance is "
         << utils::locale_en_us(balance) << std::endl;
     }else{
@@ -201,11 +203,10 @@ void deposit_money(){
     }
     
     // Convert input money text to cents and add it to balance
-    int deposit = utils::money_string_to_int(raw);
-    edit_balance(deposit, false);
+    edit_balance(raw, false);
 
-    std::cout << std::endl << utils::locale_en_us(deposit) << " deposited. Your balance is "
-    << utils::locale_en_us(balance) << std::endl;
+    std::cout << std::endl << utils::locale_en_us(utils::money_string_to_int(raw)) 
+    << " deposited. Your balance is " << utils::locale_en_us(balance) << std::endl;
 }
 
 void change_pin(){
@@ -262,59 +263,25 @@ void change_pin(){
 
 // true means this test confirms balance math is correct
 bool self_test_1(const std::string& deposit, const std::string& with_draw){
-    int deposit_test, with_draw_test, temp = balance;
+    int temp = balance;
     // Set balance to 0.00 dollars
     balance = 0;
-    if (!(utils::is_money(deposit) && utils::is_money(with_draw))){
-        balance = temp;
-        return false;
-    }
-    // Convert money strings to cents
-    deposit_test = utils::money_string_to_int(deposit);
-    with_draw_test = utils::money_string_to_int(with_draw);
-    // Simulate deposit
-    edit_balance(deposit_test, false);
-    
-    // Simulate withdrawal
-    if (!(utils::check_balance(with_draw_test))){
-        balance = temp;
-        return false;        
-    }else{
-        edit_balance(with_draw_test, true);
-    }
-    
-    if (balance == (deposit_test - with_draw_test)){
-        balance = temp;
-        return true;
-    }
+    edit_balance(deposit, false);
+    edit_balance(with_draw, true);
 
+    const bool pass = balance == (utils::money_string_to_int(deposit) - utils::money_string_to_int(with_draw));
     balance = temp;
-    return false;  
+    return pass;
+ 
 }
 
 // true means this test confirms the last-3-PIN reuse rule works
 bool self_test_2(){
-    
-    
-    // Clear PIN history
-    srand(time(0));
     std::array <std::string,3> temp = pin;
-    std::array <std::string,4> test_pin;
+    std::array <std::string,4> test_pin = utils::rand_PIN();
     pin = {"0000","0000","0000"};
 
-    // Change PIN 3 times and use a different valid PIN each time
     for(int i = 0; i < 4; i++){
-        test_pin[i] = utils::rand_PIN();
-        
-        // Regenerate until the PIN is valid and different from previous test PINs
-        while (utils::is_PIN(test_pin[i]) ||
-               (i > 0 && test_pin[i] == test_pin[0]) ||
-               (i > 1 && test_pin[i] == test_pin[1]) ||
-               (i > 2 && test_pin[i] == test_pin[2])) {
-            test_pin[i] = utils::rand_PIN();
-        }
-        
-        //Check is anybody reuse it before?
         if (utils::check_PIN(test_pin[i])){
             pin = temp;
             return false;
@@ -322,25 +289,23 @@ bool self_test_2(){
         edit_PIN(test_pin[i]);
     }
 
-    // Reusing the oldest test PIN should be detected
-    // 1. check the first is not one of the least 3
-    // 2. check the second is on  of the least 3
-    if (utils::check_PIN(test_pin[0])){
-        pin = temp;
-        return false;
-    } else if (utils::check_PIN(test_pin[1])){
-        pin = temp;
-        return true;
-    } else{
-        pin = temp;
-        return false;
-    }
-        
-    
+    const bool pass = !utils::check_PIN(test_pin[0]) && utils::check_PIN(test_pin[1]);
+    pin = temp;
+    return pass;
 }
 
 // with_draw true means subtract from balance and false means add to balance
-void edit_balance(const int& input, const bool& with_draw){
+void edit_balance(const std::string& raw, const bool& with_draw){
+    
+    if (!utils::is_money(raw)){
+        return;
+    }
+
+    if(with_draw){
+        if(!utils::check_balance(raw)) return;
+    }
+
+    const int input = utils::money_string_to_int(raw);
     
     
     if (with_draw){
@@ -348,6 +313,8 @@ void edit_balance(const int& input, const bool& with_draw){
     }else {
         balance += input;
     }
+
+    return;
 
 }
 
@@ -417,7 +384,8 @@ bool utils::is_money(std::string s){
 }
 
 // true means the balance is greater than or equal to the withdrawal amount
-bool utils::check_balance(const int& with_draw){
+bool utils::check_balance(const std::string& raw){
+    int with_draw = utils::money_string_to_int(raw);
     return (with_draw <= balance);
 }
 
@@ -458,15 +426,36 @@ int utils::money_string_to_int(std::string s){
     return std::stoi(dollars + cents);
 }
 
-// Generate a random 4-digit PIN
-std::string utils::rand_PIN(){
-    std::string radom_PIN;
+// Generate four random 4-digit PINs with no duplicates
+std::array<std::string, 4> utils::rand_PIN(){
+    srand(time(0));
     
-    for(int i = 0; i < 4; i++){
-        radom_PIN += std::to_string(rand()%10);
+    std::array<std::string, 4> pins;
+
+    for (int i = 0; i < 4; i++){
+        while (true) {
+            std::string candidate;
+
+            for(int j = 0; j < 4; j++){
+                candidate += std::to_string(std::rand() % 10);
+            }
+
+            bool duplicate = false;
+            for (int k = 0; k < i; k++) {
+                if (pins[k] == candidate) {
+                    duplicate = true;
+                    break;
+                }
+            }
+
+            if (!duplicate) {
+                pins[i] = candidate;
+                break;
+            }
+        }
     }
 
-    return radom_PIN;
+    return pins;
 
 }
 

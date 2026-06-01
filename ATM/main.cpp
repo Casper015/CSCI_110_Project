@@ -282,14 +282,12 @@ bool self_test_2(){
     pin = {"0000","0000","0000"};
 
     for(int i = 0; i < 4; i++){
-        if (utils::check_PIN(test_pin[i])){
-            pin = temp;
-            return false;
-        }
         edit_PIN(test_pin[i]);
     }
 
-    const bool pass = !utils::check_PIN(test_pin[0]) && utils::check_PIN(test_pin[1]);
+    const bool pass = !utils::check_PIN(test_pin[0]) && utils::check_PIN(test_pin[1])
+    && utils::check_PIN(test_pin[2]) && utils::check_PIN(test_pin[3]);
+    
     pin = temp;
     return pass;
 }
@@ -320,9 +318,13 @@ void edit_balance(const std::string& raw, const bool& with_draw){
 
 // Move all the pin foward a digit
 void edit_PIN(const std::string& new_PIN){
+    if(utils::check_PIN(new_PIN)){
+        return;
+    }
     pin[2] = pin[1];
     pin[1] = pin[0]; 
     pin[0] = new_PIN;
+    return;
 }
 
 // Adapted from the Slot Machine C++ project
