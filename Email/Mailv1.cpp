@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const string AppVersion = "1.2";					// This app version
+const string AppVersion = "1.3";					// This app version
 const string MailServer = "http://34.57.53.121:80";	// Cloud server
 const int ServerTimeout = 5;						// Cloud server timeout
 const string MailExt = ".mail";						// File extension of off-line mail
@@ -63,10 +63,7 @@ string trim(string);
 bool mailApi(string, httplib::Params&, string&);
 #pragma endregion
 
-#pragma dev
 string highlightText(string& text, string& pattern);
-void convertMail();
-#pragma endregion
 
 
 // main
@@ -267,8 +264,8 @@ void findMail()
 			// cout << mail.Body << endl
 			// cout << "Subject: " << mail.Subject << endl;
 
-			cout << "Subject: "  << (inSubj >= 0 ? " (matched in subject)" : "") << endl;
-			cout << (inBody >= 0 ? " (matched in body)" : "") << endl;
+			cout << "Subject: "  << (inSubj >= 0 ? highlightText(mail.Subject, pattern) : mail.Subject) << endl;
+			cout << (inBody >= 0 ? highlightText(mail.Body, pattern) : mail.Body) << endl;
 
 			cout << string(60, '-') << endl;
 			count++;
@@ -296,16 +293,17 @@ bool downloadMail()
 
 	int count = 0;
 	stringstream sin(rawMailText);
-	while (sin.good())
-	{
-		string hearderline;
-		while (getline(sin, hearderline))
+	string line;
 
-		if (hearderline.empty() || hearderline == "###")
+	while (getline(sin, line))
+	{
+		line = trim(line);
+
+		if (line.empty() || line == "###")
 			continue;	// skip empty lines and header separator
 		
 		Mail m;
-		stringstream ssMail(hearderline);
+		stringstream ssMail(line);
 		string sdate;
 
 		getline(ssMail, m.MessageId, '|');
@@ -314,16 +312,22 @@ bool downloadMail()
 		getline(ssMail, sdate, '|');
 		getline(ssMail, m.Subject);
 
-		m.Subject = trim(m.Subject);
 
-		stringstream sDate(sdate);
-		sDate >> m.Date;
-
-		string bodyLine;
 		m.Body = "";
-		while (getline(sin, bodyLine)){
-			if (trim(bodyLine) == "###")	// end of body
+		string bodyline;
+		while (getline(sin, bodyline)){
+			if (trim(bodyline) == "###")	// end of body
 				break;
+		}
+
+		if (tolower(m.To) == tolower(Username))
+		{
+			writeMail(m);
+			count++;
+		}
+		else
+		{
+			cout << "Skipped mail to " << m.MessageId << endl;
 		}
 	}
 
