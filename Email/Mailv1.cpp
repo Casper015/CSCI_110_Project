@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const string AppVersion = "1.0";					// This app version
+const string AppVersion = "1.2";					// This app version
 const string MailServer = "http://34.57.53.121:80";	// Cloud server
 const int ServerTimeout = 5;						// Cloud server timeout
 const string MailExt = ".mail";						// File extension of off-line mail
@@ -294,21 +294,36 @@ bool downloadMail()
 	cout << rawMailText << endl;
 	cout << "END: RAW MAIL TEXT" << endl;
 
-#if false
 	int count = 0;
 	stringstream sin(rawMailText);
 	while (sin.good())
 	{
+		string hearderline;
+		while (getline(sin, hearderline))
+
+		if (hearderline.empty() || hearderline == "###")
+			continue;	// skip empty lines and header separator
+		
 		Mail m;
+		stringstream ssMail(hearderline);
+		string sdate;
 
-		//
-		// ADD CODE HERE TO PARSE rawMailText to create multiple Mail objects
-		//
+		getline(ssMail, m.MessageId, '|');
+		getline(ssMail, m.From, '|');
+		getline(ssMail, m.To, '|');
+		getline(ssMail, sdate, '|');
+		getline(ssMail, m.Subject);
 
-		if (sin.good())
-		{
-			writeMail(m);
-			count++;
+		m.Subject = trim(m.Subject);
+
+		stringstream sDate(sdate);
+		sDate >> m.Date;
+
+		string bodyLine;
+		m.Body = "";
+		while (getline(sin, bodyLine)){
+			if (trim(bodyLine) == "###")	// end of body
+				break;
 		}
 	}
 
