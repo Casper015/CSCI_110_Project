@@ -623,19 +623,6 @@ string highlightText(string& text, string& pattern)
 	return output;
 }
 
-// from class bubblesort
-void bubblesort (vector<Mail>& arr, int& cost){
-	int size = arr.size();
-	for (int maxElement = size - 1; maxElement > 0; maxElement--){
-		for (int index = 0; index < maxElement; index++){
-			cost++;
-			if (arr[index].Date > arr[index + 1].Date){
-				swap(arr[index], arr[index + 1]);
-			}
-		}
-	}
-}
-
 // for class insertionsort
 void insertionsort(vector<Mail>& arr, int& cost){
 	int size = arr.size();
@@ -656,7 +643,22 @@ void insertionsort(vector<Mail>& arr, int& cost){
 	}
 }
 
+// note: those is for testing only.
+// from class bubblesort
+void bubblesort (vector<Mail>& arr, int& cost){
+	int size = arr.size();
+	for (int maxElement = size - 1; maxElement > 0; maxElement--){
+		for (int index = 0; index < maxElement; index++){
+			cost++;
+			if (arr[index].Date > arr[index + 1].Date){
+				swap(arr[index], arr[index + 1]);
+			}
+		}
+	}
+}
 
+
+// note: those is for testing only.
 // https://www.geeksforgeeks.org/cpp/cpp-program-for-quicksort/
 // C++ Program for Quick Sort
 void quicksort(vector<Mail>& arr, int low, int high, int& cost){
@@ -667,6 +669,7 @@ void quicksort(vector<Mail>& arr, int low, int high, int& cost){
 	}
 }
 
+// note: those is for testing only.
 int partition(vector<Mail>& arr, int low, int high, int& cost){
 	time_t pivot = arr[high].Date;
 	int i = low - 1;
@@ -681,6 +684,7 @@ int partition(vector<Mail>& arr, int low, int high, int& cost){
 	return i + 1;
 }
 
+// note: those is for testing only.
 int binarySearch(vector<Mail>& arr, int size, time_t value, int& cost)
 {
     int first;       // First array element
@@ -724,6 +728,7 @@ int binarySearch(vector<Mail>& arr, int size, time_t value, int& cost)
     return position;
 }
 
+// note: those is for testing only.
 bool verifysorted(vector<Mail>& arr1, vector<Mail>& arr2, vector<Mail>& arr3){
 	if (arr1.size() != arr2.size() || arr1.size() != arr3.size()){
 		return false;
