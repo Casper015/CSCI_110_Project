@@ -32,6 +32,7 @@ jobs:
           for source in "${sources[@]}"; do
             output="${source//\//_}"
             output="${output%.cpp}"
+            output="${output//./_}"
             echo "Compiling ${source} -> build/${output}"
             g++ -std=c++17 "${source}" -o "build/${output}"
           done
